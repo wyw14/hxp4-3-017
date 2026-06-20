@@ -15,11 +15,24 @@ import {
   smoothPath,
   simplifyPath,
   distance,
-  clamp
+  clamp,
+  rotatePoint
 } from './utils';
 
-const SNAP_DISTANCE = 35;
 const SAMPLE_INTERVAL = 16;
+const NARROW_SCREEN_THRESHOLD = 768;
+const DEFAULT_SNAP_DISTANCE = 35;
+const NARROW_SNAP_DISTANCE = 60;
+const TOUCH_ASSIST_MAGNIFICATION = 2.5;
+const TOUCH_ASSIST_RADIUS = 80;
+const TOUCH_ASSIST_OFFSET_Y = -110;
+
+interface TouchAssistState {
+  enabled: boolean;
+  isTouching: boolean;
+  touchPos: ScreenPoint | null;
+  canvasTouchPos: ScreenPoint | null;
+}
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -30,6 +43,17 @@ export class Game {
   private animationFrameId: number = 0;
   private listeners: Array<() => void> = [];
   private completionTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private isTouchDevice: boolean = false;
+  private isNarrowScreen: boolean = false;
+  private touchAssist: TouchAssistState = {
+    enabled: false,
+    isTouching: false,
+    touchPos: null,
+    canvasTouchPos: null
+  };
+  private assistCanvas: HTMLCanvasElement | null = null;
+  private assistCtx: CanvasRenderingContext2D | null = null;
+  private assistContainer: HTMLElement | null = null;
 
   private onLevelChange?: (level: LevelData) => void;
   private onProgressChange?: (current: number, total: number) => void;
@@ -52,8 +76,46 @@ export class Game {
       snapTargetId: null
     };
 
+    this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    this.checkScreenSize();
+    this.initTouchAssist();
     this.resize();
     this.bindEvents();
+  }
+
+  private initTouchAssist(): void {
+    this.touchAssist.enabled = this.isTouchDevice;
+    if (!this.touchAssist.enabled) return;
+
+    this.assistContainer = document.getElementById('touch-assist-container');
+    this.assistCanvas = document.getElementById('touch-assist-canvas') as HTMLCanvasElement | null;
+
+    if (this.assistCanvas) {
+      const ctx = this.assistCanvas.getContext('2d');
+      if (ctx) {
+        this.assistCtx = ctx;
+        this.resizeAssistCanvas();
+      }
+    }
+  }
+
+  private resizeAssistCanvas(): void {
+    if (!this.assistCanvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const size = TOUCH_ASSIST_RADIUS * 2;
+    this.assistCanvas.width = size * dpr;
+    this.assistCanvas.height = size * dpr;
+    this.assistCanvas.style.width = `${size}px`;
+    this.assistCanvas.style.height = `${size}px`;
+    this.assistCtx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  private checkScreenSize(): void {
+    this.isNarrowScreen = window.innerWidth < NARROW_SCREEN_THRESHOLD;
+  }
+
+  private getSnapDistance(): number {
+    return this.isNarrowScreen ? NARROW_SNAP_DISTANCE : DEFAULT_SNAP_DISTANCE;
   }
 
   private createEmptyDrawState(): DrawState {
@@ -79,8 +141,10 @@ export class Game {
   private resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    this.checkScreenSize();
     this.renderer.resize(w, h);
     this.backgroundStars = generateBackgroundStars(400, w, h);
+    this.resizeAssistCanvas();
   }
 
   private bindEvents(): void {
@@ -93,18 +157,33 @@ export class Game {
 
     this.canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
-      const t = e.touches[0];
-      this.handleMouseDown({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
-    });
+      this.isTouchDevice = true;
+      this.touchAssist.enabled = true;
+      if (e.touches.length > 0) {
+        const t = e.touches[0];
+        this.touchAssist.isTouching = true;
+        this.touchAssist.touchPos = { x: t.clientX, y: t.clientY };
+        this.touchAssist.canvasTouchPos = this.getCanvasPos({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
+        this.handleMouseDown({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
+      }
+    }, { passive: false });
     this.canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      const t = e.touches[0];
-      this.handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
-    });
+      if (e.touches.length > 0) {
+        const t = e.touches[0];
+        this.touchAssist.touchPos = { x: t.clientX, y: t.clientY };
+        this.touchAssist.canvasTouchPos = this.getCanvasPos({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
+        this.handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as MouseEvent);
+      }
+    }, { passive: false });
     this.canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
+      this.touchAssist.isTouching = false;
+      this.touchAssist.touchPos = null;
+      this.touchAssist.canvasTouchPos = null;
       this.handleMouseUp();
-    });
+      this.hideTouchAssist();
+    }, { passive: false });
   }
 
   private getCanvasPos(e: MouseEvent): ScreenPoint {
@@ -120,12 +199,13 @@ export class Game {
 
     let nearest: AnchorPoint | null = null;
     let nearestDist = Infinity;
+    const snapDist = this.getSnapDistance();
 
     for (const anchor of this.state.levelData.anchorPoints) {
       const anchorPos = this.renderer.getAnchorScreenPos(anchor, this.state.rotationOffset);
       const d = distance(pos, anchorPos);
 
-      if (d < SNAP_DISTANCE && d < nearestDist) {
+      if (d < snapDist && d < nearestDist) {
         const isValidAnchor = anchor.id.startsWith('a') || anchor.id.startsWith('b') || anchor.id.startsWith('c');
         if (isValidAnchor) {
           nearest = anchor;
@@ -135,6 +215,255 @@ export class Game {
     }
 
     return nearest;
+  }
+
+  private showTouchAssist(): void {
+    if (!this.touchAssist.enabled || !this.assistContainer || !this.touchAssist.touchPos) return;
+    this.assistContainer.style.display = 'block';
+    const assistSize = TOUCH_ASSIST_RADIUS * 2;
+    let left = this.touchAssist.touchPos.x - assistSize / 2;
+    let top = this.touchAssist.touchPos.y + TOUCH_ASSIST_OFFSET_Y;
+    const maxLeft = window.innerWidth - assistSize - 10;
+    const maxTop = window.innerHeight - assistSize - 10;
+    left = clamp(left, 10, maxLeft);
+    top = clamp(top, 10, maxTop);
+    this.assistContainer.style.left = `${left}px`;
+    this.assistContainer.style.top = `${top}px`;
+    this.updateTouchAssistLabel();
+  }
+
+  private hideTouchAssist(): void {
+    if (this.assistContainer) {
+      this.assistContainer.style.display = 'none';
+    }
+    const labelEl = document.getElementById('touch-assist-label');
+    if (labelEl) labelEl.textContent = '';
+  }
+
+  private updateTouchAssistLabel(): void {
+    const labelEl = document.getElementById('touch-assist-label');
+    if (!labelEl) return;
+    if (this.state.snapTargetId && this.state.levelData) {
+      const anchor = this.state.levelData.anchorPoints.find(a => a.id === this.state.snapTargetId);
+      if (anchor && anchor.name) {
+        labelEl.textContent = anchor.name;
+      } else if (anchor) {
+        labelEl.textContent = `吸附目标: ${anchor.frequency.toFixed(1)}Hz`;
+      } else {
+        labelEl.textContent = '';
+      }
+    } else {
+      labelEl.textContent = '';
+    }
+  }
+
+  private drawTouchAssist(): void {
+    if (!this.touchAssist.enabled || !this.touchAssist.isTouching || !this.assistCtx || !this.touchAssist.canvasTouchPos || !this.state.levelData) {
+      return;
+    }
+
+    this.showTouchAssist();
+
+    const ctx = this.assistCtx;
+    const size = TOUCH_ASSIST_RADIUS * 2;
+    const centerX = TOUCH_ASSIST_RADIUS;
+    const centerY = TOUCH_ASSIST_RADIUS;
+    const mag = TOUCH_ASSIST_MAGNIFICATION;
+    const srcCenter = this.touchAssist.canvasTouchPos;
+
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, TOUCH_ASSIST_RADIUS - 2, 0, Math.PI * 2);
+    ctx.clip();
+
+    const bgGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, TOUCH_ASSIST_RADIUS);
+    bgGrad.addColorStop(0, 'rgba(5, 10, 30, 0.95)');
+    bgGrad.addColorStop(1, 'rgba(0, 0, 15, 0.9)');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, size, size);
+
+    const drawBgStars = this.backgroundStars.filter(star => {
+      const rotated = rotatePoint(
+        { x: star.x, y: star.y },
+        { x: 0, y: 0 },
+        this.state.rotationOffset * star.z
+      );
+      const cx = this.canvas.width / (window.devicePixelRatio || 1) / 2 + rotated.x * (0.3 + star.z * 0.8);
+      const cy = this.canvas.height / (window.devicePixelRatio || 1) / 2 + rotated.y * (0.3 + star.z * 0.8);
+      const d = distance({ x: cx, y: cy }, srcCenter);
+      return d < TOUCH_ASSIST_RADIUS / mag * 1.5;
+    });
+
+    for (const star of drawBgStars) {
+      const rotated = rotatePoint(
+        { x: star.x, y: star.y },
+        { x: 0, y: 0 },
+        this.state.rotationOffset * star.z
+      );
+      const cw = this.canvas.width / (window.devicePixelRatio || 1);
+      const ch = this.canvas.height / (window.devicePixelRatio || 1);
+      const px = cw / 2 + rotated.x * (0.3 + star.z * 0.8);
+      const py = ch / 2 + rotated.y * (0.3 + star.z * 0.8);
+      const tx = centerX + (px - srcCenter.x) * mag;
+      const ty = centerY + (py - srcCenter.y) * mag;
+
+      if (tx < 0 || tx > size || ty < 0 || ty > size) continue;
+
+      const twinkle = Math.sin(this.state.time * star.twinkleSpeed + star.twinkleOffset);
+      const brightness = star.baseBrightness * (0.6 + 0.4 * twinkle);
+      const sSize = star.size * mag * 0.8;
+
+      ctx.beginPath();
+      ctx.arc(tx, ty, sSize, 0, Math.PI * 2);
+      ctx.fillStyle = `${star.color}${this.alphaToHex(brightness)}`;
+      ctx.fill();
+    }
+
+    const connectedIds = new Set<string>();
+    this.state.connections.filter(c => c.valid).forEach(c => {
+      connectedIds.add(c.from);
+      connectedIds.add(c.to);
+    });
+
+    for (const anchor of this.state.levelData.anchorPoints) {
+      const anchorPos = this.renderer.getAnchorScreenPos(anchor, this.state.rotationOffset);
+      const d = distance(anchorPos, srcCenter);
+      if (d > TOUCH_ASSIST_RADIUS / mag * 1.5) continue;
+
+      const tx = centerX + (anchorPos.x - srcCenter.x) * mag;
+      const ty = centerY + (anchorPos.y - srcCenter.y) * mag;
+
+      const twinkle = Math.sin(this.state.time * anchor.frequency * 0.8) * 0.3 + 0.7;
+      const brightness = (anchor.baseBrightness ?? 0.7) * twinkle;
+      const isAnchor = anchor.id.startsWith('a') || anchor.id.startsWith('b') || anchor.id.startsWith('c');
+      const baseColor = isAnchor ? { r: 200, g: 220, b: 255 } : { r: 180, g: 180, b: 200 };
+      const isConnected = connectedIds.has(anchor.id);
+      const connColor = isConnected ? { r: 255, g: 215, b: 100 } : baseColor;
+      const isHighlighted = this.state.snapTargetId === anchor.id;
+      const sizeMult = (isHighlighted ? 2.2 : 1.4) * mag;
+      const aSize = (anchor.size ?? 3) * sizeMult;
+
+      const glowR = aSize * 6;
+      const glow = ctx.createRadialGradient(tx, ty, 0, tx, ty, glowR);
+      glow.addColorStop(0, `rgba(${connColor.r}, ${connColor.g}, ${connColor.b}, ${brightness * 0.6})`);
+      glow.addColorStop(0.4, `rgba(${connColor.r}, ${connColor.g}, ${connColor.b}, ${brightness * 0.2})`);
+      glow.addColorStop(1, `rgba(${connColor.r}, ${connColor.g}, ${connColor.b}, 0)`);
+      ctx.beginPath();
+      ctx.arc(tx, ty, glowR, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(tx, ty, aSize, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${connColor.r}, ${connColor.g}, ${connColor.b}, ${brightness})`;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(tx, ty, aSize * 0.4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      if (isHighlighted) {
+        ctx.beginPath();
+        ctx.arc(tx, ty, aSize * 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 + Math.sin(this.state.time * 6) * 0.3})`;
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (this.state.showFrequencies && isAnchor) {
+        ctx.font = `${Math.round(11 * mag)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = `rgba(160, 196, 255, ${brightness * 0.95})`;
+        ctx.fillText(`${anchor.frequency.toFixed(1)}Hz`, tx, ty - aSize - 8 * mag);
+      }
+    }
+
+    if (this.state.drawState.isDrawing && this.state.drawState.currentPos && this.state.drawState.startAnchorId) {
+      const startAnchor = this.state.levelData.anchorPoints.find(a => a.id === this.state.drawState.startAnchorId);
+      if (startAnchor) {
+        const startPos = this.renderer.getAnchorScreenPos(startAnchor, this.state.rotationOffset);
+        const fullPath: CurvePoint[] = [{ x: startPos.x, y: startPos.y }, ...this.state.drawState.points, this.state.drawState.currentPos];
+        const magPath: CurvePoint[] = fullPath.map(p => ({
+          x: centerX + (p.x - srcCenter.x) * mag,
+          y: centerY + (p.y - srcCenter.y) * mag
+        }));
+        const clippedPath = magPath.filter(p =>
+          Math.hypot(p.x - centerX, p.y - centerY) < TOUCH_ASSIST_RADIUS - 5
+        );
+        if (clippedPath.length >= 2) {
+          const wave = Math.sin(this.state.time * 8) * 0.2 + 0.8;
+          this.drawAssistCurve(clippedPath, '#a0c4ff', 2.5 * mag * 0.8, wave);
+        }
+      }
+    }
+
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, TOUCH_ASSIST_RADIUS - 2, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(100, 150, 255, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const borderGlow = ctx.createRadialGradient(centerX, centerY, TOUCH_ASSIST_RADIUS - 10, centerX, centerY, TOUCH_ASSIST_RADIUS);
+    borderGlow.addColorStop(0, 'rgba(100, 150, 255, 0)');
+    borderGlow.addColorStop(1, 'rgba(100, 150, 255, 0.3)');
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, TOUCH_ASSIST_RADIUS, 0, Math.PI * 2);
+    ctx.strokeStyle = borderGlow;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  private drawAssistCurve(points: CurvePoint[], color: string, lineWidth: number, opacity: number): void {
+    if (!this.assistCtx || points.length < 2) return;
+    const ctx = this.assistCtx;
+
+    for (let pass = 3; pass >= 1; pass--) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      const alpha = opacity * (0.15 / pass);
+      ctx.strokeStyle = color + this.alphaToHex(alpha);
+      ctx.lineWidth = lineWidth + pass * 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.strokeStyle = color + this.alphaToHex(opacity);
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  private alphaToHex(alpha: number): string {
+    const clamped = Math.max(0, Math.min(1, alpha));
+    const hex = Math.round(clamped * 255).toString(16).padStart(2, '0');
+    return hex;
   }
 
   private handleMouseDown(e: MouseEvent): void {
@@ -474,6 +803,8 @@ export class Game {
 
       this.renderer.drawCompletionEffect(this.state.time, this.getProgress());
     }
+
+    this.drawTouchAssist();
   }
 
   private getProgress(): number {
