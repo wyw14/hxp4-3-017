@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>星界神话 - 谐波共振星座</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: 'Microsoft YaHei', sans-serif;
+      }
+      #gameCanvas {
+        display: block;
+        cursor: crosshair;
+      }
+      #ui-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        color: #fff;
+      }
+      .hud {
+        position: absolute;
+        padding: 16px 24px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(100, 150, 255, 0.3);
+        border-radius: 12px;
+        font-size: 14px;
+      }
+      #level-info {
+        top: 20px;
+        left: 20px;
+      }
+      #hint-box {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        max-width: 600px;
+      }
+      #hint-box .title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #a0c4ff;
+        margin-bottom: 8px;
+      }
+      #progress-bar {
+        top: 20px;
+        right: 20px;
+        min-width: 180px;
+      }
+      .progress-bar-container {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+      }
+      .btn {
+        pointer-events: auto;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+        margin: 0 5px;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+      #complete-modal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: rgba(10, 15, 40, 0.95);
+        border: 2px solid rgba(160, 196, 255, 0.5);
+        border-radius: 20px;
+        padding: 40px 60px;
+        text-align: center;
+        pointer-events: auto;
+        transition: transform 0.5s ease;
+      }
+      #complete-modal.show {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      #complete-modal h2 {
+        font-size: 32px;
+        color: #ffd700;
+        margin-bottom: 16px;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      }
+      #complete-modal p {
+        font-size: 16px;
+        color: #a0c4ff;
+        margin-bottom: 24px;
+        line-height: 1.6;
+      }
+      #buttons-container {
+        position: absolute;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        pointer-events: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-layer">
+      <div class="hud" id="level-info">
+        <div>第 <span id="level-num">1</span> 关</div>
+        <div style="margin-top: 6px; color: #a0c4ff;">神话生物: <span id="creature-name">未知</span></div>
+        <div style="margin-top: 6px; font-size: 12px; color: #888;">已连接: <span id="connected-count">0</span> / <span id="total-count">0</span></div>
+      </div>
+      <div class="hud" id="progress-bar">
+        <div>星座完成度</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="hud" id="hint-box">
+        <div class="title" id="hint-title">观察星空</div>
+        <div id="hint-text">寻找闪烁频率成倍数关系的恒星，用鼠标拖动连接它们</div>
+      </div>
+      <div id="buttons-container">
+        <button class="btn" id="btn-undo">撤销连线</button>
+        <button class="btn" id="btn-reset">重置本关</button>
+        <button class="btn" id="btn-hint">显示频率</button>
+      </div>
+      <div id="complete-modal">
+        <h2 id="modal-title">✨ 星座完成 ✨</h2>
+        <p id="modal-desc"></p>
+        <button class="btn" id="btn-next">下一关</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

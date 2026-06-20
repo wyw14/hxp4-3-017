@@ -1,0 +1,135 @@
+{
+  "levels": [
+    {
+      "id": 1,
+      "name": "苍穹神龙",
+      "creatureName": "苍龙",
+      "creatureDescription": "传说中盘亘于银河之上的神龙，掌管星辰运转。它的鳞片由流星铸就，每一次呼吸都会掀起宇宙的潮汐。当你连接它的星脉，便能听见远古星界的吟唱。",
+      "anchorPoints": [
+        { "id": "a1", "x": 0.15, "y": 0.75, "frequency": 1.0, "name": "龙角", "baseBrightness": 0.8, "size": 3.5 },
+        { "id": "a2", "x": 0.22, "y": 0.68, "frequency": 2.0, "name": "龙眼", "baseBrightness": 0.9, "size": 4.0 },
+        { "id": "a3", "x": 0.32, "y": 0.70, "frequency": 1.0, "name": "龙鼻", "baseBrightness": 0.7, "size": 3.0 },
+        { "id": "a4", "x": 0.42, "y": 0.62, "frequency": 3.0, "name": "龙颈", "baseBrightness": 0.75, "size": 3.2 },
+        { "id": "a5", "x": 0.55, "y": 0.55, "frequency": 2.0, "name": "龙心", "baseBrightness": 1.0, "size": 4.5 },
+        { "id": "a6", "x": 0.68, "y": 0.48, "frequency": 1.5, "name": "龙爪", "baseBrightness": 0.7, "size": 3.0 },
+        { "id": "a7", "x": 0.78, "y": 0.38, "frequency": 3.0, "name": "龙脊", "baseBrightness": 0.8, "size": 3.5 },
+        { "id": "a8", "x": 0.85, "y": 0.28, "frequency": 1.0, "name": "龙尾", "baseBrightness": 0.85, "size": 3.8 },
+        { "id": "d1", "x": 0.08, "y": 0.35, "frequency": 1.3, "name": "辅星1", "baseBrightness": 0.5, "size": 2.0 },
+        { "id": "d2", "x": 0.25, "y": 0.25, "frequency": 2.7, "name": "辅星2", "baseBrightness": 0.45, "size": 1.8 },
+        { "id": "d3", "x": 0.48, "y": 0.30, "frequency": 0.8, "name": "辅星3", "baseBrightness": 0.55, "size": 2.2 },
+        { "id": "d4", "x": 0.72, "y": 0.70, "frequency": 2.2, "name": "辅星4", "baseBrightness": 0.5, "size": 2.0 },
+        { "id": "d5", "x": 0.90, "y": 0.55, "frequency": 1.7, "name": "辅星5", "baseBrightness": 0.48, "size": 1.9 },
+        { "id": "d6", "x": 0.35, "y": 0.85, "frequency": 2.5, "name": "辅星6", "baseBrightness": 0.52, "size": 2.1 }
+      ],
+      "edges": [
+        { "from": "a1", "to": "a2", "frequencyRatio": [1, 2] },
+        { "from": "a2", "to": "a3", "frequencyRatio": [2, 1] },
+        { "from": "a3", "to": "a4", "frequencyRatio": [1, 3] },
+        { "from": "a4", "to": "a5", "frequencyRatio": [3, 2] },
+        { "from": "a5", "to": "a6", "frequencyRatio": [4, 3] },
+        { "from": "a6", "to": "a7", "frequencyRatio": [1, 2] },
+        { "from": "a7", "to": "a8", "frequencyRatio": [3, 1] }
+      ],
+      "lightPollution": {
+        "baseIntensity": 0.12,
+        "variability": 0.08,
+        "speed": 0.3
+      },
+      "rotationSpeed": 0.00008
+    },
+    {
+      "id": 2,
+      "name": "涅槃凤凰",
+      "creatureName": "朱雀",
+      "creatureDescription": "浴火重生的南方神兽朱雀，羽翼展开如烈焰燃烧。它的每一根羽毛都是一颗超新星，涅槃之际照亮整个星域。连接它的星脉，感受不死不灭的炽热之力。",
+      "anchorPoints": [
+        { "id": "b1", "x": 0.50, "y": 0.20, "frequency": 1.2, "name": "凤冠", "baseBrightness": 0.95, "size": 4.2 },
+        { "id": "b2", "x": 0.42, "y": 0.30, "frequency": 2.4, "name": "凤眼", "baseBrightness": 0.9, "size": 3.8 },
+        { "id": "b3", "x": 0.58, "y": 0.30, "frequency": 3.6, "name": "凤眼", "baseBrightness": 0.9, "size": 3.8 },
+        { "id": "b4", "x": 0.50, "y": 0.40, "frequency": 1.2, "name": "凤心", "baseBrightness": 1.0, "size": 4.8 },
+        { "id": "b5", "x": 0.28, "y": 0.45, "frequency": 2.4, "name": "左翼", "baseBrightness": 0.8, "size": 3.5 },
+        { "id": "b6", "x": 0.15, "y": 0.55, "frequency": 1.2, "name": "左翅尖", "baseBrightness": 0.85, "size": 3.6 },
+        { "id": "b7", "x": 0.72, "y": 0.45, "frequency": 4.8, "name": "右翼", "baseBrightness": 0.8, "size": 3.5 },
+        { "id": "b8", "x": 0.85, "y": 0.55, "frequency": 2.4, "name": "右翅尖", "baseBrightness": 0.85, "size": 3.6 },
+        { "id": "b9", "x": 0.50, "y": 0.58, "frequency": 3.6, "name": "凤尾基", "baseBrightness": 0.75, "size": 3.2 },
+        { "id": "b10", "x": 0.42, "y": 0.72, "frequency": 1.2, "name": "左尾羽", "baseBrightness": 0.78, "size": 3.3 },
+        { "id": "b11", "x": 0.58, "y": 0.72, "frequency": 6.0, "name": "右尾羽", "baseBrightness": 0.78, "size": 3.3 },
+        { "id": "e1", "x": 0.10, "y": 0.25, "frequency": 1.7, "name": "辅星1", "baseBrightness": 0.48, "size": 1.9 },
+        { "id": "e2", "x": 0.90, "y": 0.25, "frequency": 2.9, "name": "辅星2", "baseBrightness": 0.5, "size": 2.0 },
+        { "id": "e3", "x": 0.08, "y": 0.80, "frequency": 0.9, "name": "辅星3", "baseBrightness": 0.52, "size": 2.1 },
+        { "id": "e4", "x": 0.92, "y": 0.80, "frequency": 3.1, "name": "辅星4", "baseBrightness": 0.47, "size": 1.9 },
+        { "id": "e5", "x": 0.30, "y": 0.15, "frequency": 2.1, "name": "辅星5", "baseBrightness": 0.45, "size": 1.8 }
+      ],
+      "edges": [
+        { "from": "b1", "to": "b2", "frequencyRatio": [1, 2] },
+        { "from": "b1", "to": "b3", "frequencyRatio": [1, 3] },
+        { "from": "b2", "to": "b4", "frequencyRatio": [2, 1] },
+        { "from": "b3", "to": "b4", "frequencyRatio": [3, 1] },
+        { "from": "b4", "to": "b5", "frequencyRatio": [1, 2] },
+        { "from": "b5", "to": "b6", "frequencyRatio": [2, 1] },
+        { "from": "b4", "to": "b7", "frequencyRatio": [1, 4] },
+        { "from": "b7", "to": "b8", "frequencyRatio": [2, 1] },
+        { "from": "b4", "to": "b9", "frequencyRatio": [1, 3] },
+        { "from": "b9", "to": "b10", "frequencyRatio": [3, 1] },
+        { "from": "b9", "to": "b11", "frequencyRatio": [3, 5] }
+      ],
+      "lightPollution": {
+        "baseIntensity": 0.15,
+        "variability": 0.1,
+        "speed": 0.45
+      },
+      "rotationSpeed": 0.00012
+    },
+    {
+      "id": 3,
+      "name": "祥瑞麒麟",
+      "creatureName": "麒麟",
+      "creatureDescription": "踏云而来的祥瑞之兽麒麟，鹿角狮尾、龙鳞虎背。它所到之处星河璀璨，万星朝拜。连接它的星脉，便能获得来自星界最深沉的祝福与智慧。",
+      "anchorPoints": [
+        { "id": "c1", "x": 0.35, "y": 0.25, "frequency": 1.5, "name": "左鹿角", "baseBrightness": 0.88, "size": 3.9 },
+        { "id": "c2", "x": 0.45, "y": 0.22, "frequency": 3.0, "name": "头顶", "baseBrightness": 0.92, "size": 4.1 },
+        { "id": "c3", "x": 0.55, "y": 0.25, "frequency": 1.5, "name": "右鹿角", "baseBrightness": 0.88, "size": 3.9 },
+        { "id": "c4", "x": 0.40, "y": 0.35, "frequency": 4.5, "name": "左眼", "baseBrightness": 0.85, "size": 3.6 },
+        { "id": "c5", "x": 0.50, "y": 0.38, "frequency": 1.5, "name": "鼻尖", "baseBrightness": 0.9, "size": 4.0 },
+        { "id": "c6", "x": 0.60, "y": 0.35, "frequency": 3.0, "name": "右眼", "baseBrightness": 0.85, "size": 3.6 },
+        { "id": "c7", "x": 0.45, "y": 0.50, "frequency": 6.0, "name": "前颈", "baseBrightness": 0.78, "size": 3.3 },
+        { "id": "c8", "x": 0.55, "y": 0.50, "frequency": 7.5, "name": "后颈", "baseBrightness": 0.78, "size": 3.3 },
+        { "id": "c9", "x": 0.30, "y": 0.60, "frequency": 1.5, "name": "左前蹄", "baseBrightness": 0.82, "size": 3.5 },
+        { "id": "c10", "x": 0.70, "y": 0.60, "frequency": 4.5, "name": "右前蹄", "baseBrightness": 0.82, "size": 3.5 },
+        { "id": "c11", "x": 0.50, "y": 0.68, "frequency": 3.0, "name": "脊背", "baseBrightness": 1.0, "size": 4.6 },
+        { "id": "c12", "x": 0.25, "y": 0.78, "frequency": 1.5, "name": "左后蹄", "baseBrightness": 0.8, "size": 3.4 },
+        { "id": "c13", "x": 0.75, "y": 0.78, "frequency": 9.0, "name": "右后蹄", "baseBrightness": 0.8, "size": 3.4 },
+        { "id": "c14", "x": 0.85, "y": 0.65, "frequency": 1.5, "name": "尾尖", "baseBrightness": 0.86, "size": 3.7 },
+        { "id": "f1", "x": 0.12, "y": 0.18, "frequency": 2.3, "name": "辅星1", "baseBrightness": 0.5, "size": 2.0 },
+        { "id": "f2", "x": 0.88, "y": 0.18, "frequency": 0.7, "name": "辅星2", "baseBrightness": 0.48, "size": 1.9 },
+        { "id": "f3", "x": 0.08, "y": 0.55, "frequency": 3.7, "name": "辅星3", "baseBrightness": 0.52, "size": 2.1 },
+        { "id": "f4", "x": 0.92, "y": 0.40, "frequency": 1.1, "name": "辅星4", "baseBrightness": 0.46, "size": 1.8 },
+        { "id": "f5", "x": 0.50, "y": 0.90, "frequency": 2.8, "name": "辅星5", "baseBrightness": 0.49, "size": 2.0 },
+        { "id": "f6", "x": 0.18, "y": 0.45, "frequency": 4.2, "name": "辅星6", "baseBrightness": 0.51, "size": 2.0 }
+      ],
+      "edges": [
+        { "from": "c1", "to": "c2", "frequencyRatio": [1, 2] },
+        { "from": "c2", "to": "c3", "frequencyRatio": [2, 1] },
+        { "from": "c1", "to": "c4", "frequencyRatio": [1, 3] },
+        { "from": "c3", "to": "c6", "frequencyRatio": [1, 2] },
+        { "from": "c4", "to": "c5", "frequencyRatio": [3, 1] },
+        { "from": "c5", "to": "c6", "frequencyRatio": [1, 2] },
+        { "from": "c4", "to": "c7", "frequencyRatio": [3, 4] },
+        { "from": "c6", "to": "c8", "frequencyRatio": [2, 5] },
+        { "from": "c7", "to": "c9", "frequencyRatio": [4, 1] },
+        { "from": "c8", "to": "c10", "frequencyRatio": [5, 3] },
+        { "from": "c7", "to": "c11", "frequencyRatio": [2, 1] },
+        { "from": "c8", "to": "c11", "frequencyRatio": [5, 2] },
+        { "from": "c9", "to": "c12", "frequencyRatio": [1, 1] },
+        { "from": "c10", "to": "c13", "frequencyRatio": [1, 2] },
+        { "from": "c11", "to": "c14", "frequencyRatio": [2, 1] }
+      ],
+      "lightPollution": {
+        "baseIntensity": 0.18,
+        "variability": 0.12,
+        "speed": 0.6
+      },
+      "rotationSpeed": 0.0001
+    }
+  ]
+}
